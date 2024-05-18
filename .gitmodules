@@ -10,3 +10,6 @@
 [submodule "c2wasm-api/clang/includes"]
 	path = c2wasm-api/clang/includes
 	url = https://github.com/XRPLF/hook-macros
+[submodule "quickjslite"]
+	path = quickjslite
+	url = https://github.com/RichardAH/quickjslite

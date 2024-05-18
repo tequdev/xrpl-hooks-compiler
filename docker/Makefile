@@ -29,5 +29,8 @@ hook-cleaner: ../bin/hook-cleaner
 c2wasm-api: ../c2wasm-api
 	cp -LR $< .
 
+qjsc: ../bin/qjsc
+	cp $< .
+
 clean:
-	-rm -rf c2wasm-api clangd wasi-sdk hook-cleaner
+	-rm -rf c2wasm-api clangd wasi-sdk hook-cleaner qjsc
