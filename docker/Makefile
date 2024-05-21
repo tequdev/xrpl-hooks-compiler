@@ -33,4 +33,4 @@ qjsc: ../bin/qjsc
 	cp $< .
 
 clean:
-	-rm -rf c2wasm-api clangd wasi-sdk hook-cleaner qjsc
+	-rm -rf c2wasm-api clangd wasi-sdk hook-cleaner qjsc ../wasi-sdk.ts
