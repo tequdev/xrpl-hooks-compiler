@@ -59,4 +59,4 @@ unzip bin.zip
 - Run `make c2wasm-api && make clangd && make wasi-sdk && make hook-cleaner && make qjsc`
 - Run `docker-compose build`
 - Run `docker-compose up` or `docker-compose up -d`
-- This should start server at port `:9000`, the actual compiling endpoint is this: [http://localhost:9000/api/buildc](localhost:9000/api/buildc). Note that it takes a while to start.
+- This should start server at port `:9000`, the actual compiling endpoint is this: [http://localhost:9000/api/build](localhost:9000/api/build). Note that it takes a while to start.

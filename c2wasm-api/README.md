@@ -18,7 +18,7 @@ If you want to try this project follow these steps:
 - Install native dependencies (wasi-sdk & clangd) as automated by the docker container construction in the parent directory and run `yarn dev` here; alternatively, just run the docker instance from ../docker
 
 This should start server at port `:9000`, the actual compiling endpoint is this:
-[http://localhost:9000/api/buildc](localhost:9000/api/buildc)
+[http://localhost:9000/api/build](localhost:9000/api/build)
 
 Endpoint only accepts `HTTP POST`.
 

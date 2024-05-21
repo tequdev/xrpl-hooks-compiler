@@ -127,8 +127,6 @@ function link_js_files(source_files: string[], cwd: string, output: string, resu
   copyFileSync(cwd + '/out.c', output);
   result_obj.console = sanitize_shell_output(out);
   if (!existsSync(output)) {
-    console.log('BAD');
-    
     result_obj.success = false;
     return false;
   }
