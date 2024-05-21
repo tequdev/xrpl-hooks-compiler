@@ -82,7 +82,7 @@ server.post('/api/build', async (req, reply) => {
     const result = build_c_project(body, baseName);
     return reply.code(200).send(result);
   } catch (ex) {
-    return reply.code(500).send('500 Internal server error')
+    return reply.code(500).send(`500 Internal server error: ${ex}`)
   }
   // return reply.code(200).send({ hello: 'world' });
 });
@@ -105,7 +105,7 @@ server.post('/api/build/js', async (req, reply) => {
     const result = build_js_project(body, baseName);
     return reply.code(200).send(result);
   } catch (ex) {
-    return reply.code(500).send('500 Internal server error')
+    return reply.code(500).send(`500 Internal server error: ${ex}`)
   }
   // return reply.code(200).send({ hello: 'world' });
 });
