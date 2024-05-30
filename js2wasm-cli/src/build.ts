@@ -5,6 +5,17 @@ import path from "path";
 import { decodeBinary } from "./decodeBinary";
 import "dotenv/config";
 
+enum ConsoleColor {
+  Red = "\x1b[31m",
+  Green = "\x1b[32m",
+  Yellow = "\x1b[33m",
+  Blue = "\x1b[34m",
+  Magenta = "\x1b[35m",
+  Cyan = "\x1b[36m",
+  White = "\x1b[37m",
+  Reset = "\x1b[0m",
+}
+
 interface Task {
   name: string;
   console: string;
@@ -49,12 +60,13 @@ export async function buildFile(
   outDir: string
 ): Promise<void> {
   const fileContent = fs.readFileSync(dirPath, "utf-8");
-  if (!dirPath.includes(".js")) {
-    throw Error("Invalid file type. must be .js file");
+  if (!dirPath.includes(".js") && !dirPath.includes(".ts")) {
+    throw Error("Invalid file type. must be .js or .ts file");
   }
   const filename = dirPath.split("/").pop();
+  const filetype = filename?.split(".").pop();
   const fileObject = {
-    type: "js",
+    type: filetype,
     name: filename,
     options: "-O3",
     src: fileContent,
@@ -80,6 +92,14 @@ export function readFiles(dirPath: string): any[] {
       const fileContent = fs.readFileSync(filePath, "utf-8");
       files.push({
         type: "js",
+        name: fileName,
+        options: "-O3",
+        src: fileContent,
+      });
+    } else if (path.extname(fileName) === ".ts") {
+      const fileContent = fs.readFileSync(filePath, "utf-8");
+      files.push({
+        type: "ts",
         name: fileName,
         options: "-O3",
         src: fileContent,
@@ -119,6 +139,10 @@ async function saveFileOrError(
     throw Error(result.message);
   } else {
     const binary = await decodeBinary(result.output);
+    console.log(
+      `Built Wasm: ${outDir}${filename}.bc ${ConsoleColor.Blue}%s${ConsoleColor.Reset}`,
+      `${binary.byteLength}b`
+    );
     fs.writeFileSync(
       path.join(outDir + "/" + filename + ".bc"),
       Buffer.from(Buffer.from(binary).toString(), "hex")
@@ -127,7 +151,7 @@ async function saveFileOrError(
 }
 
 export async function buildWasm(fileObject: any, outDir: string) {
-  const filename = fileObject.name.split(".js")[0];
+  const filename = fileObject.name.split(".")[0];
   // Sending API call to endpoint
   const body = JSON.stringify({
     output: "bc",

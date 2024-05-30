@@ -1,6 +1,6 @@
 {
   "name": "js2wasm-cli",
-  "version": "1.0.0",
+  "version": "1.0.4",
   "description": "",
   "main": "dist/npm/index.js",
   "files": [
@@ -26,6 +26,7 @@
     "base64-js": "^1.5.1",
     "commander": "^10.0.1",
     "dotenv": "^16.1.4",
+    "esbuild": "^0.21.4",
     "pako": "^2.1.0"
   },
   "devDependencies": {
