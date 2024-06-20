@@ -140,7 +140,7 @@ async function saveFileOrError(
   } else {
     const binary = await decodeBinary(result.output);
     console.log(
-      `Built Wasm: ${outDir}${filename}.bc ${ConsoleColor.Blue}%s${ConsoleColor.Reset}`,
+      `Built Wasm: ${outDir}/${filename}.bc ${ConsoleColor.Blue}%s${ConsoleColor.Reset}`,
       `${binary.byteLength}b`
     );
     fs.writeFileSync(
