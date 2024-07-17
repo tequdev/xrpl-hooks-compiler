@@ -4,19 +4,7 @@
 import { Command } from "commander";
 import { buildFile } from "./build";
 import { mkdir, statSync } from "fs";
-import { execSync } from "child_process";
-
-async function exec(cmd: string, cwd: string) {
-  let error = "";
-  try {
-    execSync(cmd, { cwd });
-  } catch (ex: unknown) {
-    if (ex instanceof Error) {
-      error = ex?.message;
-    }
-  }
-  return error;
-}
+import * as esbuild from "esbuild";
 
 import * as fs from "fs";
 import * as path from "path";
@@ -79,11 +67,13 @@ export async function main() {
     const newPath = inPath.replace(file as string, `dist/${filename}.js`);
     console.log(inPath);
 
-    await exec(
-      `esbuild ${inPath} --bundle --outfile=${newPath} --format=esm`,
-      "."
-    );
-    await clean(newPath, newPath);
+    await esbuild.build({
+      entryPoints: [inPath],
+      outfile: newPath,
+      bundle: true,
+      format: "esm",
+    });
+    clean(newPath, newPath);
     await buildFile(newPath, outDir);
     return;
   }
