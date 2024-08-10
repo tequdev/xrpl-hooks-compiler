@@ -1,10 +1,9 @@
 {
   "extends": "@tsconfig/node16/tsconfig.json",
   "compilerOptions": {
-    "resolveJsonModule": true,
-    "preserveConstEnums": true,
     "outDir": "./dist/npm",
+    "declaration": true,
+    "declarationMap": true,
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", ""]
+  "include": ["src/**/*"]
 }
