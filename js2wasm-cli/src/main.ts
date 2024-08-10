@@ -4,25 +4,6 @@
 import { Command } from "commander";
 import { buildFile } from "./build";
 import { mkdir, statSync } from "fs";
-import * as esbuild from "esbuild";
-
-import * as fs from "fs";
-import * as path from "path";
-
-function clean(filePath: string, outputPath?: string): string {
-  const tsCode = fs.readFileSync(filePath, "utf-8");
-  const importPattern = /^\s*import\s+.*?;\s*$/gm;
-  const exportPattern = /^\s*export\s*\{[^}]*\};?\s*$/gm;
-  const commentPattern = /^\s*\/\/.*$/gm;
-  let cleanedCode = tsCode.replace(importPattern, "");
-  cleanedCode = cleanedCode.replace(exportPattern, "");
-  cleanedCode = cleanedCode.replace(commentPattern, "");
-  cleanedCode = cleanedCode.trim();
-  if (outputPath) {
-    fs.writeFileSync(outputPath, cleanedCode, "utf-8");
-  }
-  return cleanedCode;
-}
 
 export async function main() {
   // Creating a new command
@@ -59,23 +40,6 @@ export async function main() {
     }
   } catch (error: any) {
     mkdir(outDir, async () => console.log(`Created directory: ${outDir}`));
-  }
-
-  if (path.extname(inPath) === ".ts") {
-    const file = inPath.split("/").pop();
-    const filename = file?.split(".ts")[0];
-    const newPath = inPath.replace(file as string, `dist/${filename}.js`);
-    console.log(inPath);
-
-    await esbuild.build({
-      entryPoints: [inPath],
-      outfile: newPath,
-      bundle: true,
-      format: "esm",
-    });
-    clean(newPath, newPath);
-    await buildFile(newPath, outDir);
-    return;
   }
 
   const dirStat = statSync(inPath);

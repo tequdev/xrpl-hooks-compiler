@@ -3,6 +3,7 @@ import axios from "axios";
 import fs from "fs";
 import path from "path";
 import { decodeBinary } from "./decodeBinary";
+import * as esbuild from "esbuild";
 import "dotenv/config";
 
 enum ConsoleColor {
@@ -59,11 +60,18 @@ export async function buildFile(
   dirPath: string,
   outDir: string
 ): Promise<void> {
-  const fileContent = fs.readFileSync(dirPath, "utf-8");
   if (!dirPath.includes(".js") && !dirPath.includes(".ts")) {
     throw Error("Invalid file type. must be .js or .ts file");
   }
-  const filename = dirPath.split("/").pop();
+
+  let path = dirPath;
+
+  if (dirPath.includes(".ts")) {
+    path = await compileTs(dirPath);
+  }
+
+  const fileContent = fs.readFileSync(path, "utf-8");
+  const filename = path.split("/").pop();
   const filetype = filename?.split(".").pop();
   const fileObject = {
     type: filetype,
@@ -195,4 +203,34 @@ export async function buildWasm(fileObject: any, outDir: string) {
   } catch (error: any) {
     console.log(`Error sending API call: ${error}`);
   }
+}
+
+function clean(filePath: string, outputPath?: string): string {
+  const tsCode = fs.readFileSync(filePath, "utf-8");
+  const importPattern = /^\s*import\s+.*?;\s*$/gm;
+  const exportPattern = /^\s*export\s*\{[^}]*\};?\s*$/gm;
+  const commentPattern = /^\s*\/\/.*$/gm;
+  let cleanedCode = tsCode.replace(importPattern, "");
+  cleanedCode = cleanedCode.replace(exportPattern, "");
+  cleanedCode = cleanedCode.replace(commentPattern, "");
+  cleanedCode = cleanedCode.trim();
+  if (outputPath) {
+    fs.writeFileSync(outputPath, cleanedCode, "utf-8");
+  }
+  return cleanedCode;
+}
+
+async function compileTs(tsFilePath: string) {
+  const file = tsFilePath.split("/").pop();
+  const filename = file?.split(".ts")[0];
+  const newPath = tsFilePath.replace(file as string, `dist/${filename}.js`);
+
+  await esbuild.build({
+    entryPoints: [tsFilePath],
+    outfile: newPath,
+    bundle: true,
+    format: "esm",
+  });
+  clean(newPath, newPath);
+  return newPath;
 }
