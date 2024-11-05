@@ -3,6 +3,7 @@
   "version": "1.0.6",
   "description": "",
   "main": "dist/npm/index.js",
+  "types": "dist/npm/index.d.ts",
   "files": [
     "dist/**/*"
   ],
