@@ -9,11 +9,32 @@ import * as esbuild from "esbuild";
 import * as fs from "fs";
 import * as path from "path";
 
+function validateExportContent(content: string): void {
+  const words = content
+    .split(",")
+    .map((word) => word.trim())
+    .filter((word) => word.length > 0);
+  if (!words.includes("Hook")) {
+    throw Error("Invalid export: Hook is required");
+  }
+  if (!words.every((word) => word === "Hook" || word === "Callback")) {
+    throw Error("Invalid export: Only Hook and Callback are allowed");
+  }
+}
+
 function clean(filePath: string, outputPath?: string): string {
   const tsCode = fs.readFileSync(filePath, "utf-8");
   const importPattern = /^\s*import\s+.*?;\s*$/gm;
-  const exportPattern = /^\s*export\s*\{[^}]*\};?\s*$/gm;
+  const exportPattern = /^\s*export\s*\{([^}]*)\};?\s*$/gm;
   const commentPattern = /^\s*\/\/.*$/gm;
+
+  const match = exportPattern.exec(tsCode);
+  if (!match) {
+    throw Error("Invalid export: No export found");
+  }
+  const exportContent = match[1];
+  validateExportContent(exportContent);
+
   let cleanedCode = tsCode.replace(importPattern, "");
   cleanedCode = cleanedCode.replace(exportPattern, "");
   cleanedCode = cleanedCode.replace(commentPattern, "");
