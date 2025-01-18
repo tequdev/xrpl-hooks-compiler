@@ -12,6 +12,7 @@ export async function main() {
   // Adding an argument for the directory path
   program.argument("<inPath>", "input path (dir/file)");
   program.argument("<outDir>", "output directory");
+  program.option("--headers <headerPath>", "header path (dir)");
 
   // Parsing the command line arguments
   program.parse(process.argv);
@@ -19,6 +20,7 @@ export async function main() {
   // Getting the directory path from the arguments
   const inPath = program.args[0];
   const outDir = program.args[1] || "build";
+  const headerPath = program.opts().headers as string | undefined;
 
   // Checking if directory path is provided
   if (!inPath) {
@@ -44,8 +46,8 @@ export async function main() {
 
   const dirStat = fs.statSync(inPath);
   if (dirStat.isDirectory()) {
-    await buildDir(inPath, outDir);
+    await buildDir(inPath, outDir, headerPath);
   } else {
-    await buildFile(inPath, outDir);
+    await buildFile(inPath, outDir, headerPath);
   }
 }

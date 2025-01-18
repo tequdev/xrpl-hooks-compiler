@@ -35,6 +35,8 @@ const llvmDir = process.cwd() + "/clang/wasi-sdk";
 const tempDir = "/tmp";
 const sysroot = llvmDir + "/share/wasi-sysroot";
 
+const defaultHeaderDir = '/app/clang/includes'
+
 export interface ResponseData {
   success: boolean;
   message: string;
@@ -60,6 +62,13 @@ const requestBodySchema = z.object({
       src: z.string(),
     })
   ),
+  headers: z.array(
+    z.object({
+      type: z.string(),
+      name: z.string(),
+      src: z.string(),
+    })
+  ).optional(),
   link_options: z.string().optional(),
   compress: z.boolean().optional(),
   strip: z.boolean().optional(),
@@ -164,8 +173,12 @@ function get_optimization_options(options: string) {
   return safe_options;
 }
 
+function get_include_path(include_path: string) {
+  return `-I${include_path}`;
+}
+
 function get_clang_options(options: string) {
-  const clang_flags = `--sysroot=${sysroot} -xc -I/app/clang/includes -fdiagnostics-print-source-range-info -Werror=implicit-function-declaration`;
+  const clang_flags = `--sysroot=${sysroot} -xc -fdiagnostics-print-source-range-info -Werror=implicit-function-declaration`;
   const miscellaneous_options = [
     "-ffast-math",
     "-fno-inline",
@@ -224,6 +237,7 @@ function validate_filename(name: string) {
 
 function link_c_files(
   source_files: string[],
+  include_path: string,
   compile_options: string,
   link_options: string,
   cwd: string,
@@ -239,6 +253,8 @@ function link_c_files(
     " " +
     " -o " +
     output +
+    " " +
+    get_include_path(include_path) +
     " " +
     get_clang_options(compile_options) +
     " " +
@@ -339,6 +355,7 @@ function build_project(project: RequestBody, base: string) {
   };
   const dir = base + ".$";
   const result = base + ".wasm";
+  const customHeadersDir = dir + "/includes";
 
   const complete = (success: boolean, message: string) => {
     rmSync(dir, { recursive: true });
@@ -365,7 +382,13 @@ function build_project(project: RequestBody, base: string) {
     mkdirSync(dir);
   }
 
+  const headerFiles = project.headers;
+  if (!existsSync(customHeadersDir)) {
+    mkdirSync(customHeadersDir);
+  }
+
   const sources = [];
+  const headers = [];
   let options;
   for (let file of files) {
     const name = file.name;
@@ -389,6 +412,24 @@ function build_project(project: RequestBody, base: string) {
 
     writeFileSync(fileName, src);
   }
+  
+  if (headerFiles) {
+    for (let file of headerFiles) {
+      const name = file.name;
+      if (!validate_filename(name)) {
+        return complete(false, "Invalid filename " + name);
+      }
+      let fileName = customHeadersDir + "/" + name;
+      headers.push(fileName);
+
+      const src = file.src;
+      if (!src) {
+        return complete(false, "Header file " + name + " is empty");
+      }
+      writeFileSync(fileName, src);
+    }
+  }
+
   const link_options = project.link_options;
   const link_result_obj = {
     name: "building wasm",
@@ -397,6 +438,7 @@ function build_project(project: RequestBody, base: string) {
   if (
     !link_c_files(
       sources,
+      headerFiles && headers.length ? customHeadersDir : defaultHeaderDir,
       options || "",
       link_options || "",
       dir,
@@ -472,6 +514,7 @@ server.post("/api/build", async (req, reply) => {
     const result = build_project(body, baseName);
     return reply.code(200).send(result);
   } catch (ex) {
+    console.error(ex);
     return reply.code(500).send("500 Internal server error");
   }
   // return reply.code(200).send({ hello: 'world' });
