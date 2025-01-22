@@ -1,6 +1,6 @@
-# API that compiles C code to WASM
+# API that compiles C / JS code to WASM
 
-This directory contains a webserver for a C to WASM compiler and
+This directory contains a webserver for a C / JS to WASM compiler and
 Language Server (i.e. interactive linting).  Server is built with
 [Fastify](https://www.fastify.io/), fast and low overhead framework
 for Node.js
