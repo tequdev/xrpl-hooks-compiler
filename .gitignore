@@ -4,4 +4,6 @@ bin.zip
 docker/c2wasm-api
 docker/wasi-sdk
 docker/clangd
-docker/cleaner
+docker/hook-cleaner
+docker/qjsc
+wasi-sdk.ts
