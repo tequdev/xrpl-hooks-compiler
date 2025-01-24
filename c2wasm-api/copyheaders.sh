@@ -17,4 +17,4 @@ then
 else
     mkdir -p /app/clang/includes
 fi
-cp clang/include/hook/*.h /app/clang/includes
+cp clang/includes/hook/*.h /app/clang/includes
