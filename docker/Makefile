@@ -27,6 +27,10 @@ hook-cleaner: ../bin/hook-cleaner
 	cp $< .
 	chmod +x hook-cleaner
 
+guard-checker: ../bin/guard_checker
+	cp $< .
+	chmod +x guard_checker
+
 c2wasm-api: ../c2wasm-api
 	cp -LR $< .
 

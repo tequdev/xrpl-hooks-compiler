@@ -108,7 +108,7 @@ function get_optimization_options(options: string) {
       optimization_level += ' ' + o;
     }
   }
-  
+
   let safe_options = '';
   const _options = [
     '--shrink-level=100000000',
@@ -203,7 +203,7 @@ function link_c_files(source_files: string[], compile_options: string, link_opti
   const files = source_files.join(' ');
   const clang = llvmDir + '/bin/clang';
   let optimization_level = '';
-  
+
   for (let o of optimization_options) {
     if (compile_options.includes(o)) {
       optimization_level == o;
@@ -260,6 +260,27 @@ function clean_wasm(cwd: string, inplace: string, result_obj: Task) {
     closeSync(out);
   }
   const out_msg = readFileSync(cwd + '/cleanout.log').toString() || error;
+  result_obj.console = sanitize_shell_output(out_msg);
+  result_obj.success = success;
+  return success;
+}
+
+function guard_check_wasm(cwd: string, inplace: string, result_obj: Task) {
+  const cmd = 'guard_checker ' + inplace;
+  const out = openSync(cwd + '/guardout.log', 'w');
+  let error = '';
+  let success = true;
+  try {
+    execSync(cmd, { cwd, stdio: [null, out, out], });
+  } catch (ex: unknown) {
+    success = false;
+    if (ex instanceof Error) {
+      error = ex?.message;
+    }
+  } finally {
+    closeSync(out);
+  }
+  const out_msg = readFileSync(cwd + '/guardout.log').toString() || error;
   result_obj.console = sanitize_shell_output(out_msg);
   result_obj.success = success;
   return success;
@@ -375,6 +396,14 @@ export function build_project(project: RequestBody, base: string) {
     if (!clean_wasm(dir, result, clean_obj)) {
       return complete(false, 'Post-build error');
     }
+  }
+
+  const guard_result_obj = {
+    name: 'guard checking wasm'
+  };
+  build_result.tasks.push(guard_result_obj);
+  if (!guard_check_wasm(dir, result, guard_result_obj)) {
+    return complete(false, 'Guard checking error');
   }
 
   build_result.output = serialize_file_data(result, compress || false);

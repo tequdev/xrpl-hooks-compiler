@@ -11,6 +11,7 @@ COPY c2wasm-api/tsconfig.json .
 COPY c2wasm-api/src ./src
 COPY wasi-sdk ./clang/wasi-sdk
 COPY hook-cleaner /usr/bin
+COPY guard_checker /usr/bin
 COPY wasm-opt /usr/bin
 COPY qjsc /usr/bin
 COPY run.sh .
