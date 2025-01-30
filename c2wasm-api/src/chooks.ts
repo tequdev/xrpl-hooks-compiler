@@ -364,7 +364,7 @@ export function build_project(project: RequestBody, base: string) {
     };
     build_result.tasks.push(opt_obj);
     if (!optimize_wasm(dir, result, opt_options, opt_obj)) {
-      return complete(false, 'Optimization error');
+      return complete(false, 'Pass 1 Optimization error');
     }
   }
 
@@ -374,7 +374,7 @@ export function build_project(project: RequestBody, base: string) {
     };
     build_result.tasks.push(clean_obj);
     if (!clean_wasm(dir, result, clean_obj)) {
-      return complete(false, 'Post-build error');
+      return complete(false, 'Pass 1 Clean error');
     }
   }
 
@@ -384,19 +384,19 @@ export function build_project(project: RequestBody, base: string) {
     };
     build_result.tasks.push(opt_obj);
     if (!optimize_wasm(dir, result, opt_options, opt_obj)) {
-      return complete(false, 'Optimization error');
+      return complete(false, 'Pass 2 Optimization error');
     }
   }
 
-  if (strip) {
-    const clean_obj = {
-      name: 'cleaning wasm'
-    };
-    build_result.tasks.push(clean_obj);
-    if (!clean_wasm(dir, result, clean_obj)) {
-      return complete(false, 'Post-build error');
-    }
-  }
+  // if (strip) {
+  //   const clean_obj = {
+  //     name: 'cleaning wasm'
+  //   };
+  //   build_result.tasks.push(clean_obj);
+  //   if (!clean_wasm(dir, result, clean_obj)) {
+  //     return complete(false, 'Pass 2 Clean error');
+  //   }
+  // }
 
   const guard_result_obj = {
     name: 'guard checking wasm'
