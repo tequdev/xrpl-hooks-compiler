@@ -45,7 +45,8 @@ const requestBodySchema = z.object({
   })),
   link_options: z.string().optional(),
   compress: z.boolean().optional(),
-  strip: z.boolean().optional()
+  strip: z.boolean().optional(),
+  optimize: z.boolean().optional()
 });
 
 type RequestBody = z.infer<typeof requestBodySchema>;
@@ -101,7 +102,7 @@ const optimization_options = [
     /* default '-O0' not included */ '-O1', '-O2', '-O3', '-O4', '-Oz'
 ];
 
-function get_optimization_options(options: string) {
+function get_optimization_options(options: string, optimize: boolean) {
   let optimization_level = '';
   for (let o of optimization_options) {
     if (options.includes(o)) {
@@ -137,8 +138,12 @@ function get_optimization_options(options: string) {
     optimization_level
   ]
 
-  for (let o of _options) {
-    safe_options += ' ' + o;
+  if (optimize) {
+    for (let o of _options) {
+      safe_options += ' ' + o;
+    }
+  } else {
+    safe_options = optimization_level
   }
 
   return safe_options;
@@ -290,6 +295,7 @@ export function build_project(project: RequestBody, base: string) {
   const output = project.output;
   const compress = project.compress;
   const strip = project.strip;
+  const optimize = project.optimize;
   let build_result: ResponseData = {
     success: false,
     message: '',
@@ -357,7 +363,7 @@ export function build_project(project: RequestBody, base: string) {
     return complete(false, 'Build error');
   }
 
-  const opt_options = get_optimization_options(options || '');
+  const opt_options = get_optimization_options(options || '', optimize);
   if (opt_options) {
     const opt_obj = {
       name: 'optimizing wasm'
@@ -378,7 +384,7 @@ export function build_project(project: RequestBody, base: string) {
     }
   }
 
-  if (opt_options) {
+  if (optimize && opt_options) {
     const opt_obj = {
       name: 'optimizing wasm'
     };
