@@ -45,8 +45,7 @@ const requestBodySchema = z.object({
   })),
   link_options: z.string().optional(),
   compress: z.boolean().optional(),
-  strip: z.boolean().optional(),
-  optimize: z.boolean().optional()
+  strip: z.boolean().optional()
 });
 
 type RequestBody = z.infer<typeof requestBodySchema>;
@@ -98,20 +97,10 @@ function shell_exec(cmd: string, cwd: string) {
   return result;
 }
 
-const optimization_options = [
-    /* default '-O0' not included */ '-O1', '-O2', '-O3', '-O4', '-Oz'
-];
+const optimization_level = '-03'
 
-function get_optimization_options(options: string, optimize: boolean) {
-  let optimization_level = '';
-  for (let o of optimization_options) {
-    if (options.includes(o)) {
-      optimization_level += ' ' + o;
-    }
-  }
-
-  let safe_options = '';
-  const _options = [
+function get_optimization_options() {
+  const options = [
     '--shrink-level=100000000',
     '--coalesce-locals-learning',
     '--vacuum',
@@ -138,33 +127,13 @@ function get_optimization_options(options: string, optimize: boolean) {
     optimization_level
   ]
 
-  if (optimize) {
-    for (let o of _options) {
-      safe_options += ' ' + o;
-    }
-  } else {
-    safe_options = optimization_level
-  }
-
-  return safe_options;
+  return options.join(' ');
 }
 
-function get_clang_options(options: string) {
+function get_clang_options() {
   const clang_flags = `--sysroot=${sysroot} -xc -I/app/clang/includes -fdiagnostics-print-source-range-info -Werror=implicit-function-declaration`;
-  const miscellaneous_options = [
-    '-ffast-math', '-fno-inline', '-std=c99', '-std=c89'
-  ];
 
-  let safe_options = '';
-  for (let o of miscellaneous_options) {
-    if (options.includes(o)) {
-      safe_options += ' ' + o;
-    } else if (o.includes('-std=') && options.toLowerCase().includes(o)) {
-      safe_options += ' ' + o;
-    }
-  }
-
-  return clang_flags + safe_options;
+  return clang_flags;
 }
 
 function get_lld_options(options: string) {
@@ -204,17 +173,11 @@ function validate_filename(name: string) {
   return parts;
 }
 
-function link_c_files(source_files: string[], compile_options: string, link_options: string, cwd: string, output: string, result_obj: Task) {
+function link_c_files(source_files: string[], link_options: string, cwd: string, output: string, result_obj: Task) {
   const files = source_files.join(' ');
   const clang = llvmDir + '/bin/clang';
-  let optimization_level = '';
 
-  for (let o of optimization_options) {
-    if (compile_options.includes(o)) {
-      optimization_level == o;
-    }
-  }
-  const cmd = clang + ' ' + optimization_level + ' ' + get_clang_options(compile_options) + ' ' + get_lld_options(link_options) + ' ' + files + ' -o ' + output;
+  const cmd = clang + ' ' + optimization_level + ' ' + get_clang_options() + ' ' + get_lld_options(link_options) + ' ' + files + ' -o ' + output;
 
   const out = shell_exec(cmd, cwd);
   result_obj.console = sanitize_shell_output(out);
@@ -295,7 +258,6 @@ export function build_project(project: RequestBody, base: string) {
   const output = project.output;
   const compress = project.compress;
   const strip = project.strip;
-  const optimize = project.optimize;
   let build_result: ResponseData = {
     success: false,
     message: '',
@@ -359,11 +321,11 @@ export function build_project(project: RequestBody, base: string) {
     name: 'building wasm'
   };
   build_result.tasks.push(link_result_obj);
-  if (!link_c_files(sources, options || '', link_options || '', dir, result, link_result_obj)) {
+  if (!link_c_files(sources, link_options || '', dir, result, link_result_obj)) {
     return complete(false, 'Build error');
   }
 
-  const opt_options = get_optimization_options(options || '', optimize);
+  const opt_options = get_optimization_options();
   if (opt_options) {
     const opt_obj = {
       name: 'optimizing wasm'
@@ -384,7 +346,7 @@ export function build_project(project: RequestBody, base: string) {
     }
   }
 
-  if (optimize && opt_options) {
+  if (opt_options) {
     const opt_obj = {
       name: 'optimizing wasm'
     };
