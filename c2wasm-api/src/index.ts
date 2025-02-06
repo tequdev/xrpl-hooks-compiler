@@ -44,6 +44,12 @@ const requestCBodySchema = z.object({
     options: z.string().optional(),
     src: z.string()
   })),
+  headers: z.array(z.object({
+    type: z.string(),
+    name: z.string(),
+    options: z.string().optional(),
+    src: z.string()
+  })),
   link_options: z.string().optional(),
   compress: z.boolean().optional(),
   strip: z.boolean().optional()
@@ -82,6 +88,7 @@ server.post('/api/build', async (req, reply) => {
     const result = build_c_project(body, baseName);
     return reply.code(200).send(result);
   } catch (ex) {
+    console.error(ex);
     return reply.code(500).send(`500 Internal server error: ${ex}`)
   }
   // return reply.code(200).send({ hello: 'world' });
@@ -105,6 +112,7 @@ server.post('/api/build/js', async (req, reply) => {
     const result = build_js_project(body, baseName);
     return reply.code(200).send(result);
   } catch (ex) {
+    console.error(ex);
     return reply.code(500).send(`500 Internal server error: ${ex}`)
   }
   // return reply.code(200).send({ hello: 'world' });

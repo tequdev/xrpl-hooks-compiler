@@ -19,6 +19,7 @@ server.register(fastifyWebSocket);
 const llvmDir = process.cwd() + "/clang/wasi-sdk";
 const tempDir = "/tmp";
 const sysroot = llvmDir + "/share/wasi-sysroot";
+const defaultHeaderDir = '/app/clang/includes';
 
 export interface ResponseData {
   success: boolean;
@@ -43,6 +44,13 @@ const requestBodySchema = z.object({
     options: z.string().optional(),
     src: z.string()
   })),
+  headers: z.array(
+    z.object({
+      type: z.string(),
+      name: z.string(),
+      src: z.string(),
+    })
+  ).optional(),
   link_options: z.string().optional(),
   compress: z.boolean().optional(),
   strip: z.boolean().optional()
@@ -130,8 +138,12 @@ function get_optimization_options() {
   return options.join(' ');
 }
 
+function get_include_path(include_path: string) {
+  return `-I${include_path}`;
+}
+
 function get_clang_options() {
-  const clang_flags = `--sysroot=${sysroot} -xc -I/app/clang/includes -fdiagnostics-print-source-range-info -Werror=implicit-function-declaration`;
+  const clang_flags = `--sysroot=${sysroot} -xc -fdiagnostics-print-source-range-info -Werror=implicit-function-declaration`;
 
   return clang_flags;
 }
@@ -173,12 +185,10 @@ function validate_filename(name: string) {
   return parts;
 }
 
-function link_c_files(source_files: string[], link_options: string, cwd: string, output: string, result_obj: Task) {
+function link_c_files(source_files: string[], include_path: string, link_options: string, cwd: string, output: string, result_obj: Task) {
   const files = source_files.join(' ');
   const clang = llvmDir + '/bin/clang';
-
-  const cmd = clang + ' ' + optimization_level + ' ' + get_clang_options() + ' ' + get_lld_options(link_options) + ' ' + files + ' -o ' + output;
-
+  const cmd = clang + ' ' + optimization_level + ' ' + get_clang_options() + ' ' + get_lld_options(link_options) + ' ' + files + ' -o ' + output + ' ' + get_include_path(include_path);
   const out = shell_exec(cmd, cwd);
   result_obj.console = sanitize_shell_output(out);
   if (!existsSync(output)) {
@@ -266,6 +276,7 @@ export function build_project(project: RequestBody, base: string) {
   };
   const dir = base + '.$';
   const result = base + '.wasm';
+  const customHeadersDir = dir + "/includes";
 
   const complete = (success: boolean, message: string) => {
     rmSync(dir, { recursive: true });
@@ -292,7 +303,13 @@ export function build_project(project: RequestBody, base: string) {
     mkdirSync(dir);
   }
 
+  const headerFiles = project.headers;
+  if (!existsSync(customHeadersDir)) {
+    mkdirSync(customHeadersDir);
+  }
+
   const sources = [];
+  const headers = [];
   let options;
   for (let file of files) {
     const name = file.name;
@@ -316,12 +333,29 @@ export function build_project(project: RequestBody, base: string) {
 
     writeFileSync(fileName, src);
   }
+
+  if (headerFiles) {
+    for (let file of headerFiles) {
+      const name = file.name;
+      if (!validate_filename(name)) {
+        return complete(false, "Invalid filename " + name);
+      }
+      let fileName = customHeadersDir + "/" + name;
+      headers.push(fileName);
+
+      const src = file.src;
+      if (!src) {
+        return complete(false, "Header file " + name + " is empty");
+      }
+      writeFileSync(fileName, src);
+    }
+  }
   const link_options = project.link_options;
   const link_result_obj = {
     name: 'building wasm'
   };
   build_result.tasks.push(link_result_obj);
-  if (!link_c_files(sources, link_options || '', dir, result, link_result_obj)) {
+  if (!link_c_files(sources, headerFiles && headers?.length ? customHeadersDir : defaultHeaderDir, link_options || '', dir, result, link_result_obj)) {
     return complete(false, 'Build error');
   }
 
