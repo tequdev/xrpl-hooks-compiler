@@ -97,7 +97,7 @@ function shell_exec(cmd: string, cwd: string) {
   return result;
 }
 
-const optimization_level = '-03'
+const optimization_level = '-O3'
 
 function get_optimization_options() {
   const options = [
