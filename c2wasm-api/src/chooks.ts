@@ -1,19 +1,7 @@
-import fastify from 'fastify';
-import fs from 'fs';
 import { mkdirSync, writeFileSync, existsSync, openSync, closeSync, readFileSync, renameSync, rmSync, unlinkSync } from "fs";
 import { deflateSync } from "zlib";
 import { execSync } from "child_process";
 import { z } from 'zod';
-import fastifyCors from 'fastify-cors';
-import fastifyWebSocket from 'fastify-websocket';
-
-const server = fastify();
-
-server.register(fastifyCors, {
-  // put your options here
-  origin: '*'
-})
-server.register(fastifyWebSocket);
 
 // Compilation code
 const llvmDir = process.cwd() + "/clang/wasi-sdk";
@@ -36,7 +24,7 @@ export interface Task {
   output?: string;
 }
 
-const requestBodySchema = z.object({
+export const requestBodySchema = z.object({
   output: z.enum(['wasm']),
   files: z.array(z.object({
     type: z.string(),
@@ -56,7 +44,7 @@ const requestBodySchema = z.object({
   strip: z.boolean().optional()
 });
 
-type RequestBody = z.infer<typeof requestBodySchema>;
+export type RequestBody = z.infer<typeof requestBodySchema>;
 
 // Input: JSON in the following format
 // {

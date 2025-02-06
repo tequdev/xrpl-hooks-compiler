@@ -1,13 +1,12 @@
 import fastify from 'fastify';
 import { readFileSync, readdirSync } from "fs";
-import { z } from 'zod';
 import fastifyCors from 'fastify-cors';
 import fastifyWebSocket from 'fastify-websocket';
 import * as ws from 'ws';
 import * as rpc from 'vscode-ws-jsonrpc';
 import * as rpcServer from 'vscode-ws-jsonrpc/lib/server';
-import { build_project as build_c_project } from './chooks';
-import { build_project as build_js_project } from './jshooks';
+import { build_project as build_c_project, requestBodySchema as requestCBodySchema, RequestBody as RequestCBody } from './chooks';
+import { build_project as build_js_project, requestBodySchema as requestJSBodySchema, RequestBody as RequestJSBody } from './jshooks';
 
 const server = fastify();
 
@@ -35,40 +34,6 @@ export interface Task {
   console?: string;
   output?: string;
 }
-
-const requestCBodySchema = z.object({
-  output: z.enum(['wasm']),
-  files: z.array(z.object({
-    type: z.string(),
-    name: z.string(),
-    options: z.string().optional(),
-    src: z.string()
-  })),
-  headers: z.array(z.object({
-    type: z.string(),
-    name: z.string(),
-    options: z.string().optional(),
-    src: z.string()
-  })),
-  link_options: z.string().optional(),
-  compress: z.boolean().optional(),
-  strip: z.boolean().optional()
-});
-const requestJSBodySchema = z.object({
-  output: z.enum(['bc']),
-  files: z.array(z.object({
-    type: z.string(),
-    name: z.string(),
-    options: z.string().optional(),
-    src: z.string()
-  })),
-  link_options: z.string().optional(),
-  compress: z.boolean().optional(),
-  strip: z.boolean().optional()
-});
-
-type RequestCBody = z.infer<typeof requestCBodySchema>;
-type RequestJSBody = z.infer<typeof requestJSBodySchema>;
 
 server.post('/api/build', async (req, reply) => {
   // Bail out early if not HTTP POST
