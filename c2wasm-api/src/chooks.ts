@@ -132,7 +132,6 @@ function get_include_path(include_path: string) {
 
 function get_clang_options() {
   const clang_flags = `--sysroot=${sysroot} -xc -fdiagnostics-print-source-range-info -Werror=implicit-function-declaration`;
-
   return clang_flags;
 }
 
@@ -343,6 +342,7 @@ export function build_project(project: RequestBody, base: string) {
     name: 'building wasm'
   };
   build_result.tasks.push(link_result_obj);
+ 
   if (!link_c_files(sources, headerFiles && headers?.length ? customHeadersDir : defaultHeaderDir, link_options || '', dir, result, link_result_obj)) {
     return complete(false, 'Build error');
   }
